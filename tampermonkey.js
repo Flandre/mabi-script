@@ -47,6 +47,8 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
             {title:"不是神仙能上天,腾云驾雾只等闲,崇山峻岭闪身后,万里行程一日还。(打一交通工具)",option:"a"},
             {title:"两人很亲密,彼此不分离，它们一团聚,东西就分离。(打一工具)",option:"a"},
             {title:"哪个字人人都会写“错”？",option:"b"},
+            {title:"什么东西越洗越脏？",option:"b"},
+            {title:"菲利亚是一座什么种族居住的城市。",option:"c"},
             {title:"艾明马恰的酒店的大门前有4份张贴的小广告。",answer:"4根"},
             {title:"埃文中有几个小型喷水池。",answer:"9个"},
             {title:"整个班格有几个炉子。",answer:"9个"},
