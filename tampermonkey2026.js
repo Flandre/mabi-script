@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         洛奇猜灯谜2026中秋
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  洛奇答题辅助脚本
 // @author       flandre
 // @match        https://evt08.tiancity.com/luoqi/2651127/home/index.php*
@@ -558,6 +558,8 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
             {title:"灯谜“说像糖，它不甜，说像盐，又不咸”的谜底是？",answer:"雪花"},
             {title:"“明月几时有”出自哪首词？",answer:"水调歌头"},
             {title:"二十四小时，打一字",answer:"旧"},
+            {title:"圣光颂唱者新增的技能名称是？",answer:"音波洗礼"},
+            {title:"被称为“诗圣”的诗人是？",answer:"杜甫"},
             {title:"",answer:""},
             {title:"",answer:""},
             {title:"",answer:""},
@@ -617,6 +619,38 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
         return [obj.option1, obj.option2, obj.option3, obj.option4];
     }
 
+    function optionMatchScore(cleanAnswer, cleanOption)
+    {
+        if (!cleanAnswer || !cleanOption) return -1;
+        if (cleanOption === cleanAnswer) return 10000 + cleanOption.length;
+        if (cleanOption.indexOf(cleanAnswer) !== -1) return 1000 + cleanAnswer.length;
+        if (cleanAnswer.indexOf(cleanOption) !== -1) return cleanOption.length;
+        return -1;
+    }
+
+    function matchOptionList(answer, optionHtmlList)
+    {
+        var cleanAnswer = cleanText(answer);
+        var best = null;
+        var bestScore = -1;
+        var i, rawText, cleanOption, score;
+        for (i = 0; i < optionHtmlList.length; i++) {
+            if (optionHtmlList[i] == null || optionHtmlList[i] === '' || optionHtmlList[i] === 'null') continue;
+            rawText = extractOptionText(optionHtmlList[i]);
+            cleanOption = cleanText(rawText);
+            score = optionMatchScore(cleanAnswer, cleanOption);
+            if (score > bestScore) {
+                bestScore = score;
+                best = {
+                    data: String(i + 1),
+                    label: 'ABCD'.charAt(i),
+                    text: rawText
+                };
+            }
+        }
+        return best;
+    }
+
     function resolveAnswer(answer, obj)
     {
         if (!answer) return null;
@@ -630,22 +664,8 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
             };
         }
 
-        var cleanAnswer = cleanText(answer);
-        var opts = getApiOptions(obj);
-        var i, cleanOption, rawText;
-        for (i = 0; i < opts.length; i++) {
-            if (opts[i] == null || opts[i] === '' || opts[i] === 'null') continue;
-            rawText = extractOptionText(opts[i]);
-            cleanOption = cleanText(rawText);
-            if (!cleanOption) continue;
-            if (cleanOption === cleanAnswer || cleanOption.indexOf(cleanAnswer) !== -1 || cleanAnswer.indexOf(cleanOption) !== -1) {
-                return {
-                    data: String(i + 1),
-                    label: 'ABCD'.charAt(i),
-                    text: rawText
-                };
-            }
-        }
+        var best = matchOptionList(answer, getApiOptions(obj));
+        if (best) return best;
         return { data: null, label: '', text: answer, fallbackText: answer };
     }
 
@@ -660,18 +680,19 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
         }
 
         if ((!$opt || !$opt.length) && resolved.fallbackText) {
-            var cleanAnswer = cleanText(resolved.fallbackText);
+            var optionHtml = [];
             $("#layer1 .option a").each(function() {
-                var rawText = extractOptionText($(this).html() || $(this).text());
-                var cleanOption = cleanText(rawText);
-                debug("选项全文：" + $(this).text() + " 清理后：" + cleanOption + " 答案清理后：" + cleanAnswer);
-                if (cleanOption && (cleanOption === cleanAnswer || cleanOption.indexOf(cleanAnswer) !== -1 || cleanAnswer.indexOf(cleanOption) !== -1)) {
-                    $opt = $(this);
-                    resolved.label = 'ABCD'.charAt($("#layer1 .option a").index(this));
-                    resolved.text = rawText;
-                    return false;
-                }
+                optionHtml.push($(this).html() || $(this).text());
             });
+            var best = matchOptionList(resolved.fallbackText, optionHtml);
+            if (best) {
+                $opt = $("#layer1 .option a[data='" + best.data + "']");
+                if (!$opt.length) {
+                    $opt = $("#layer1 .option a:eq(" + (parseInt(best.data, 10) - 1) + ")");
+                }
+                resolved.label = best.label;
+                resolved.text = best.text;
+            }
         }
 
         if ($opt && $opt.length) {
