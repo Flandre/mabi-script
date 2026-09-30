@@ -556,6 +556,8 @@ let debug = isdebug ? console.log.bind(console) : ()=>{}
             {title:"“野旷天低树”的下一句是？",answer:"江清月近人"},
             {title:"一口咬掉牛尾巴，打一字",answer:"告"},
             {title:"灯谜“说像糖，它不甜，说像盐，又不咸”的谜底是？",answer:"雪花"},
+            {title:"“明月几时有”出自哪首词？",answer:"水调歌头"},
+            {title:"二十四小时，打一字",answer:"旧"},
             {title:"",answer:""},
             {title:"",answer:""},
             {title:"",answer:""},
